@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Intuit Repos</string>
+    <string name="repositories">Repositories</string>
+    <string name="repository_details">Repository Details</string>
+    <string name="issues">Issues</string>
+    <string name="open_issues">Open Issues</string>
+    <string name="closed_issues">Closed Issues</string>
+    <string name="stars">Stars: %1$d</string>
+    <string name="forks">Forks: %1$d</string>
+    <string name="language">Language: %1$s</string>
+    <string name="no_language">Language: Not specified</string>
+    <string name="error_loading_repos">Error loading repositories</string>
+    <string name="error_loading_issues">Error loading issues</string>
+    <string name="retry">Retry</string>
+    <string name="loading">Loading…</string>
+    <string name="no_repositories_found">No repositories found</string>
+    <string name="no_issues_found">No issues found</string>
+    <string name="created_at">Created: %1$s</string>
+    <string name="updated_at">Updated: %1$s</string>
+    <string name="issue_number">#%1$d</string>
+</resources> 
