@@ -25,9 +25,7 @@ fun RepositoryDetailScreen(
     viewModel: RepositoryDetailViewModel = hiltViewModel(),
     onBackClick: () -> Unit
 ) {
-    val repositoryState by viewModel.repositoryState.collectAsState()
-    val openIssuesState by viewModel.openIssuesState.collectAsState()
-    val closedIssuesState by viewModel.closedIssuesState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     
     Scaffold(
         topBar = {
@@ -49,23 +47,22 @@ fun RepositoryDetailScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when (val state = repositoryState) {
-                is RepositoryDetailUiState.Loading -> {
+            when {
+                uiState.isLoading -> {
                     LoadingComponent()
                 }
-                is RepositoryDetailUiState.Success -> {
-                    RepositoryDetailContent(
-                        repository = state.repository,
-                        openIssuesState = openIssuesState,
-                        closedIssuesState = closedIssuesState,
-                        onRetryOpenIssues = { viewModel.loadIssues("open") },
-                        onRetryClosedIssues = { viewModel.loadIssues("closed") }
+                uiState.error != null -> {
+                    ErrorComponent(
+                        message = uiState.error ?: "Unknown error",
+                        onRetry = { viewModel.processIntent(RepositoryDetailIntent.LoadRepository) }
                     )
                 }
-                is RepositoryDetailUiState.Error -> {
-                    ErrorComponent(
-                        message = state.message,
-                        onRetry = { viewModel.loadRepository() }
+                uiState.hasRepository -> {
+                    RepositoryDetailContent(
+                        repository = uiState.repository!!,
+                        uiState = uiState,
+                        onRetryOpenIssues = { viewModel.processIntent(RepositoryDetailIntent.LoadIssues("open")) },
+                        onRetryClosedIssues = { viewModel.processIntent(RepositoryDetailIntent.LoadIssues("closed")) }
                     )
                 }
             }
@@ -76,8 +73,7 @@ fun RepositoryDetailScreen(
 @Composable
 fun RepositoryDetailContent(
     repository: Repository,
-    openIssuesState: IssuesUiState,
-    closedIssuesState: IssuesUiState,
+    uiState: RepositoryDetailState,
     onRetryOpenIssues: () -> Unit,
     onRetryClosedIssues: () -> Unit
 ) {
@@ -153,14 +149,18 @@ fun RepositoryDetailContent(
             0 -> {
                 // Open issues
                 IssuesContent(
-                    issuesState = openIssuesState,
+                    isLoading = uiState.isLoadingOpenIssues,
+                    issues = uiState.openIssues,
+                    error = uiState.openIssuesError,
                     onRetry = onRetryOpenIssues
                 )
             }
             1 -> {
                 // Closed issues
                 IssuesContent(
-                    issuesState = closedIssuesState,
+                    isLoading = uiState.isLoadingClosedIssues,
+                    issues = uiState.closedIssues,
+                    error = uiState.closedIssuesError,
                     onRetry = onRetryClosedIssues
                 )
             }
@@ -170,24 +170,23 @@ fun RepositoryDetailContent(
 
 @Composable
 fun IssuesContent(
-    issuesState: IssuesUiState,
+    isLoading: Boolean,
+    issues: List<Issue>,
+    error: String?,
     onRetry: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        when (issuesState) {
-            is IssuesUiState.Loading -> {
+        when {
+            isLoading -> {
                 LoadingComponent()
             }
-            is IssuesUiState.Success -> {
-                IssuesList(issues = issuesState.issues)
-            }
-            is IssuesUiState.Error -> {
+            error != null -> {
                 ErrorComponent(
-                    message = stringResource(R.string.error_loading_issues),
+                    message = error,
                     onRetry = onRetry
                 )
             }
-            is IssuesUiState.Empty -> {
+            issues.isEmpty() -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -199,6 +198,9 @@ fun IssuesContent(
                         modifier = Modifier.padding(16.dp)
                     )
                 }
+            }
+            else -> {
+                IssuesList(issues = issues)
             }
         }
     }

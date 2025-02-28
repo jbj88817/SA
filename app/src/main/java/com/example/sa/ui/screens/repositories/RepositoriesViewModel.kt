@@ -3,8 +3,10 @@ package com.example.sa.ui.screens.repositories
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sa.R
-import com.example.sa.domain.model.Repository
-import com.example.sa.domain.repository.GithubRepository
+import com.example.sa.domain.usecase.FilterRepositoriesUseCase
+import com.example.sa.domain.usecase.GetRepositoriesUseCase
+import com.example.sa.domain.usecase.SearchRepositoriesUseCase
+import com.example.sa.domain.usecase.SortRepositoriesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -12,123 +14,152 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RepositoriesViewModel @Inject constructor(
-    private val repository: GithubRepository
+    private val getRepositoriesUseCase: GetRepositoriesUseCase,
+    private val searchRepositoriesUseCase: SearchRepositoriesUseCase,
+    private val filterRepositoriesUseCase: FilterRepositoriesUseCase,
+    private val sortRepositoriesUseCase: SortRepositoriesUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<RepositoriesUiState>(RepositoriesUiState.Loading)
-    val uiState: StateFlow<RepositoriesUiState> = _uiState
+    private val _uiState = MutableStateFlow(RepositoriesState(isLoading = true))
+    val uiState: StateFlow<RepositoriesState> = _uiState.asStateFlow()
 
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery
-
-    private val _sortOption = MutableStateFlow(SortOption.NAME_ASC)
-    val sortOption: StateFlow<SortOption> = _sortOption
-
-    private val _filterOption = MutableStateFlow(FilterOption.ALL)
-    val filterOption: StateFlow<FilterOption> = _filterOption
-
-    private val _repositories = MutableStateFlow<List<Repository>>(emptyList())
-
+    private val _intent = MutableSharedFlow<RepositoriesIntent>()
+    
     init {
-        loadRepositories()
-        
-        // Combine search, sort, and filter to update UI state
-        combine(
-            _repositories,
-            _searchQuery,
-            _sortOption,
-            _filterOption
-        ) { repos, query, sort, filter ->
-            applySearchSortAndFilter(repos, query, sort, filter)
-        }.onEach { filteredAndSortedRepos ->
-            updateUiState(filteredAndSortedRepos)
-        }.launchIn(viewModelScope)
+        processIntents()
+        processIntent(RepositoriesIntent.LoadRepositories)
     }
-
-    fun loadRepositories() {
+    
+    fun processIntent(intent: RepositoriesIntent) {
         viewModelScope.launch {
-            _uiState.value = RepositoriesUiState.Loading
-            try {
-                val repos = repository.getRepositories()
-                _repositories.value = repos
-                // UI state will be updated by the combine flow
-            } catch (e: Exception) {
-                _uiState.value = RepositoriesUiState.Error(e.message ?: "Unknown error")
-            }
+            _intent.emit(intent)
         }
     }
-
-    fun updateSearchQuery(query: String) {
-        _searchQuery.value = query
-    }
-
-    fun clearSearch() {
-        _searchQuery.value = ""
-    }
-
-    fun updateSortOption(option: SortOption) {
-        _sortOption.value = option
-    }
-
-    fun updateFilterOption(option: FilterOption) {
-        _filterOption.value = option
-    }
-
-    fun resetFilters() {
-        _searchQuery.value = ""
-        _sortOption.value = SortOption.NAME_ASC
-        _filterOption.value = FilterOption.ALL
-    }
-
-    private fun applySearchSortAndFilter(
-        repositories: List<Repository>,
-        query: String,
-        sort: SortOption,
-        filter: FilterOption
-    ): List<Repository> {
-        // Apply search
-        val searchResults = if (query.isBlank()) {
-            repositories
-        } else {
-            repositories.filter {
-                it.name.contains(query, ignoreCase = true) ||
-                it.description?.contains(query, ignoreCase = true) == true
-            }
-        }
-
-        // Apply filter
-        val filteredResults = when (filter) {
-            FilterOption.ALL -> searchResults
-            FilterOption.JAVA -> searchResults.filter { 
-                it.language?.equals("Java", ignoreCase = true) == true 
-            }
-            FilterOption.KOTLIN -> searchResults.filter { 
-                it.language?.equals("Kotlin", ignoreCase = true) == true 
-            }
-            FilterOption.ANDROID -> searchResults.filter { 
-                it.topics.any { topic -> 
-                    topic.equals("android", ignoreCase = true) 
+    
+    private fun processIntents() {
+        viewModelScope.launch {
+            _intent.collect { intent ->
+                when (intent) {
+                    is RepositoriesIntent.LoadRepositories -> loadRepositories()
+                    is RepositoriesIntent.UpdateSearchQuery -> updateSearchQuery(intent.query)
+                    is RepositoriesIntent.ClearSearch -> clearSearch()
+                    is RepositoriesIntent.UpdateSortOption -> updateSortOption(intent.option)
+                    is RepositoriesIntent.UpdateFilterOption -> updateFilterOption(intent.option)
+                    is RepositoriesIntent.ResetFilters -> resetFilters()
                 }
             }
         }
+    }
 
-        // Apply sort
-        return when (sort) {
-            SortOption.NAME_ASC -> filteredResults.sortedBy { it.name }
-            SortOption.NAME_DESC -> filteredResults.sortedByDescending { it.name }
-            SortOption.STARS_ASC -> filteredResults.sortedBy { it.stars }
-            SortOption.STARS_DESC -> filteredResults.sortedByDescending { it.stars }
-            SortOption.UPDATED_ASC -> filteredResults.sortedBy { it.updatedAt }
-            SortOption.UPDATED_DESC -> filteredResults.sortedByDescending { it.updatedAt }
+    private fun loadRepositories() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            
+            getRepositoriesUseCase().collect { result ->
+                result.fold(
+                    onSuccess = { repositories ->
+                        _uiState.update { currentState ->
+                            val filteredAndSorted = applyFiltersAndSort(
+                                repositories,
+                                currentState.searchQuery,
+                                currentState.filterOption,
+                                currentState.sortOption
+                            )
+                            currentState.copy(
+                                isLoading = false,
+                                repositories = repositories,
+                                filteredRepositories = filteredAndSorted
+                            )
+                        }
+                    },
+                    onFailure = { error ->
+                        _uiState.update { 
+                            it.copy(
+                                isLoading = false, 
+                                error = error.message ?: "Unknown error"
+                            ) 
+                        }
+                    }
+                )
+            }
         }
     }
 
-    private fun updateUiState(repositories: List<Repository>) {
-        _uiState.value = if (repositories.isEmpty()) {
-            RepositoriesUiState.Empty
-        } else {
-            RepositoriesUiState.Success(repositories)
+    private fun updateSearchQuery(query: String) {
+        _uiState.update { currentState ->
+            val filteredAndSorted = applyFiltersAndSort(
+                currentState.repositories,
+                query,
+                currentState.filterOption,
+                currentState.sortOption
+            )
+            currentState.copy(
+                searchQuery = query,
+                filteredRepositories = filteredAndSorted
+            )
         }
+    }
+
+    private fun clearSearch() {
+        updateSearchQuery("")
+    }
+
+    private fun updateSortOption(option: SortOption) {
+        _uiState.update { currentState ->
+            val filteredAndSorted = applyFiltersAndSort(
+                currentState.repositories,
+                currentState.searchQuery,
+                currentState.filterOption,
+                option
+            )
+            currentState.copy(
+                sortOption = option,
+                filteredRepositories = filteredAndSorted
+            )
+        }
+    }
+
+    private fun updateFilterOption(option: FilterOption) {
+        _uiState.update { currentState ->
+            val filteredAndSorted = applyFiltersAndSort(
+                currentState.repositories,
+                currentState.searchQuery,
+                option,
+                currentState.sortOption
+            )
+            currentState.copy(
+                filterOption = option,
+                filteredRepositories = filteredAndSorted
+            )
+        }
+    }
+
+    private fun resetFilters() {
+        _uiState.update { currentState ->
+            val filteredAndSorted = applyFiltersAndSort(
+                currentState.repositories,
+                "",
+                FilterOption.ALL,
+                SortOption.NAME_ASC
+            )
+            currentState.copy(
+                searchQuery = "",
+                filterOption = FilterOption.ALL,
+                sortOption = SortOption.NAME_ASC,
+                filteredRepositories = filteredAndSorted
+            )
+        }
+    }
+
+    private fun applyFiltersAndSort(
+        repositories: List<com.example.sa.domain.model.Repository>,
+        query: String,
+        filterOption: FilterOption,
+        sortOption: SortOption
+    ): List<com.example.sa.domain.model.Repository> {
+        val searched = searchRepositoriesUseCase(repositories, query)
+        val filtered = filterRepositoriesUseCase(searched, filterOption)
+        return sortRepositoriesUseCase(filtered, sortOption)
     }
 }
 
@@ -146,11 +177,4 @@ enum class FilterOption(val stringResId: Int) {
     JAVA(R.string.filter_java),
     KOTLIN(R.string.filter_kotlin),
     ANDROID(R.string.filter_android)
-}
-
-sealed class RepositoriesUiState {
-    object Loading : RepositoriesUiState()
-    data class Success(val repositories: List<Repository>) : RepositoriesUiState()
-    data class Error(val message: String) : RepositoriesUiState()
-    object Empty : RepositoriesUiState()
 } 

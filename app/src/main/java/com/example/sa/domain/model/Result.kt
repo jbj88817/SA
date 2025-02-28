@@ -9,5 +9,17 @@ sealed class Result<out T> {
         fun <T> success(data: T): Result<T> = Success(data)
         fun error(exception: Throwable): Result<Nothing> = Error(exception)
         fun <T> loading(): Result<T> = Loading
+        fun <T> failure(exception: Throwable): Result<T> = Error(exception)
+    }
+    
+    inline fun <R> fold(
+        onSuccess: (T) -> R,
+        onFailure: (Throwable) -> R
+    ): R {
+        return when (this) {
+            is Success -> onSuccess(data)
+            is Error -> onFailure(exception)
+            is Loading -> onFailure(IllegalStateException("Result is still loading"))
+        }
     }
 } 

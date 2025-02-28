@@ -6,10 +6,16 @@ import com.example.sa.domain.repository.IssueRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Use case for getting issues for a repository
+ * Note: This is a mock implementation since we're focusing on repositories
+ */
 class GetIssuesUseCase @Inject constructor(
-    private val repository: IssueRepository
+    private val issueRepository: IssueRepository
 ) {
+    
     operator fun invoke(owner: String, repo: String, state: String): Flow<Result<List<Issue>>> {
-        return repository.getIssues(owner, repo, state)
+        // Simply pass through the flow from the repository
+        return issueRepository.getIssues(owner, repo, state)
     }
 } 

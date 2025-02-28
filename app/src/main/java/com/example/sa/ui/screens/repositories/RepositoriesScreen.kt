@@ -34,9 +34,6 @@ fun RepositoriesScreen(
     onRepositoryClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val sortOption by viewModel.sortOption.collectAsState()
-    val filterOption by viewModel.filterOption.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current
     
     var showFilterDialog by remember { mutableStateOf(false) }
@@ -44,9 +41,9 @@ fun RepositoriesScreen(
     
     if (showFilterDialog) {
         FilterDialog(
-            currentFilter = filterOption,
+            currentFilter = uiState.filterOption,
             onFilterSelected = { 
-                viewModel.updateFilterOption(it)
+                viewModel.processIntent(RepositoriesIntent.UpdateFilterOption(it))
                 showFilterDialog = false
             },
             onDismiss = { showFilterDialog = false }
@@ -55,9 +52,9 @@ fun RepositoriesScreen(
     
     if (showSortDialog) {
         SortDialog(
-            currentSort = sortOption,
+            currentSort = uiState.sortOption,
             onSortSelected = { 
-                viewModel.updateSortOption(it)
+                viewModel.processIntent(RepositoriesIntent.UpdateSortOption(it))
                 showSortDialog = false
             },
             onDismiss = { showSortDialog = false }
@@ -70,8 +67,12 @@ fun RepositoriesScreen(
                 title = { Text(text = stringResource(R.string.repositories)) },
                 actions = {
                     // Reset button
-                    if (searchQuery.isNotEmpty() || filterOption != FilterOption.ALL || sortOption != SortOption.NAME_ASC) {
-                        IconButton(onClick = { viewModel.resetFilters() }) {
+                    if (uiState.searchQuery.isNotEmpty() || 
+                        uiState.filterOption != FilterOption.ALL || 
+                        uiState.sortOption != SortOption.NAME_ASC) {
+                        IconButton(onClick = { 
+                            viewModel.processIntent(RepositoriesIntent.ResetFilters) 
+                        }) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
                                 contentDescription = stringResource(R.string.reset)
@@ -89,9 +90,9 @@ fun RepositoriesScreen(
         ) {
             // Search Bar
             SearchBar(
-                query = searchQuery,
-                onQueryChange = { viewModel.updateSearchQuery(it) },
-                onClearQuery = { viewModel.clearSearch() },
+                query = uiState.searchQuery,
+                onQueryChange = { viewModel.processIntent(RepositoriesIntent.UpdateSearchQuery(it)) },
+                onClearQuery = { viewModel.processIntent(RepositoriesIntent.ClearSearch) },
                 onSearch = { keyboardController?.hide() },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -107,7 +108,7 @@ fun RepositoriesScreen(
             ) {
                 // Filter Button
                 FilterButton(
-                    currentFilter = filterOption,
+                    currentFilter = uiState.filterOption,
                     onClick = { showFilterDialog = true },
                     modifier = Modifier.weight(1f)
                 )
@@ -116,7 +117,7 @@ fun RepositoriesScreen(
                 
                 // Sort Button
                 SortButton(
-                    currentSort = sortOption,
+                    currentSort = uiState.sortOption,
                     onClick = { showSortDialog = true },
                     modifier = Modifier.weight(1f)
                 )
@@ -127,32 +128,24 @@ fun RepositoriesScreen(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                when (val state = uiState) {
-                    is RepositoriesUiState.Loading -> {
+                when {
+                    uiState.isLoading -> {
                         LoadingComponent()
                     }
-                    is RepositoriesUiState.Success -> {
-                        RepositoriesList(
-                            repositories = state.repositories,
-                            onRepositoryClick = { repository ->
-                                onRepositoryClick(repository.name)
-                            }
-                        )
-                    }
-                    is RepositoriesUiState.Error -> {
+                    uiState.error != null -> {
                         ErrorComponent(
-                            message = stringResource(R.string.error_loading_repos),
-                            onRetry = { viewModel.loadRepositories() }
+                            message = uiState.error ?: stringResource(R.string.error_loading_repos),
+                            onRetry = { viewModel.processIntent(RepositoriesIntent.LoadRepositories) }
                         )
                     }
-                    is RepositoriesUiState.Empty -> {
+                    uiState.isEmpty -> {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = if (searchQuery.isNotEmpty()) {
-                                    stringResource(R.string.no_repositories_found_for_query, searchQuery)
+                                text = if (uiState.searchQuery.isNotEmpty()) {
+                                    stringResource(R.string.no_repositories_found_for_query, uiState.searchQuery)
                                 } else {
                                     stringResource(R.string.no_repositories_found)
                                 },
@@ -161,6 +154,14 @@ fun RepositoriesScreen(
                                 modifier = Modifier.padding(16.dp)
                             )
                         }
+                    }
+                    else -> {
+                        RepositoriesList(
+                            repositories = uiState.filteredRepositories,
+                            onRepositoryClick = { repository ->
+                                onRepositoryClick(repository.name)
+                            }
+                        )
                     }
                 }
             }
