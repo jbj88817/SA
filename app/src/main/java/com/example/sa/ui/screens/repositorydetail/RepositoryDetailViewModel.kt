@@ -60,6 +60,9 @@ class RepositoryDetailViewModel @Inject constructor(
                                 repository = repository
                             )
                         }
+                        // Automatically load issues after repository is loaded
+                        loadIssues("open")
+                        loadIssues("closed")
                     },
                     onFailure = { error ->
                         _uiState.update { 
