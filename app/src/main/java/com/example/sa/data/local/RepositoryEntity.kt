@@ -11,13 +11,14 @@ data class RepositoryEntity(
     val name: String,
     val description: String?,
     val language: String?,
-    val stargazersCount: Int,
-    val forksCount: Int,
+    val stars: Int,
+    val forks: Int,
     val openIssuesCount: Int,
     val htmlUrl: String,
     val createdAt: String,
     val updatedAt: String,
-    val organization: String
+    val organization: String,
+    val topics: String = "" // Store as comma-separated string
 ) {
     fun toDomainModel(): Repository {
         return Repository(
@@ -25,12 +26,13 @@ data class RepositoryEntity(
             name = name,
             description = description,
             language = language,
-            stargazersCount = stargazersCount,
-            forksCount = forksCount,
+            stars = stars,
+            forks = forks,
             openIssuesCount = openIssuesCount,
             htmlUrl = htmlUrl,
             createdAt = createdAt,
-            updatedAt = updatedAt
+            updatedAt = updatedAt,
+            topics = topics.split(",").filter { it.isNotEmpty() }
         )
     }
 
@@ -41,13 +43,14 @@ data class RepositoryEntity(
                 name = repository.name,
                 description = repository.description,
                 language = repository.language,
-                stargazersCount = repository.stargazersCount,
-                forksCount = repository.forksCount,
+                stars = repository.stars,
+                forks = repository.forks,
                 openIssuesCount = repository.openIssuesCount,
                 htmlUrl = repository.htmlUrl,
                 createdAt = repository.createdAt,
                 updatedAt = repository.updatedAt,
-                organization = organization
+                organization = organization,
+                topics = repository.topics.joinToString(",")
             )
         }
     }

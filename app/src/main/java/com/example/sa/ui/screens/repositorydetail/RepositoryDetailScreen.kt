@@ -116,12 +116,12 @@ fun RepositoryDetailContent(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = stringResource(R.string.stars, repository.stargazersCount),
+                        text = stringResource(R.string.stars, repository.stars),
                         style = MaterialTheme.typography.body2
                     )
                     
                     Text(
-                        text = stringResource(R.string.forks, repository.forksCount),
+                        text = stringResource(R.string.forks, repository.forks),
                         style = MaterialTheme.typography.body2
                     )
                     

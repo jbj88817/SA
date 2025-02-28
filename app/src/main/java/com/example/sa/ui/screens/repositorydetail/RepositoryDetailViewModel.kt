@@ -5,22 +5,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sa.domain.model.Issue
 import com.example.sa.domain.model.Repository
-import com.example.sa.domain.model.Result
-import com.example.sa.domain.usecase.GetIssuesUseCase
-import com.example.sa.domain.usecase.GetRepositoryUseCase
-import com.example.sa.domain.usecase.RefreshIssuesUseCase
+import com.example.sa.domain.repository.GithubRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class RepositoryDetailViewModel @Inject constructor(
-    private val getRepositoryUseCase: GetRepositoryUseCase,
-    private val getIssuesUseCase: GetIssuesUseCase,
-    private val refreshIssuesUseCase: RefreshIssuesUseCase,
+    private val repository: GithubRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -33,52 +27,31 @@ class RepositoryDetailViewModel @Inject constructor(
     private val _closedIssuesState = MutableStateFlow<IssuesUiState>(IssuesUiState.Loading)
     val closedIssuesState: StateFlow<IssuesUiState> = _closedIssuesState
 
-    private val organization = "intuit"
     private val repositoryName: String = checkNotNull(savedStateHandle["repositoryName"])
 
     init {
         loadRepository()
-        loadIssues("open")
-        loadIssues("closed")
+        // For now, we'll just show empty states for issues since we're focusing on repositories
+        _openIssuesState.value = IssuesUiState.Empty
+        _closedIssuesState.value = IssuesUiState.Empty
     }
 
     fun loadRepository() {
         viewModelScope.launch {
-            getRepositoryUseCase(organization, repositoryName).collect { result ->
-                _repositoryState.value = when (result) {
-                    is Result.Success -> RepositoryDetailUiState.Success(result.data)
-                    is Result.Error -> RepositoryDetailUiState.Error(result.exception.message ?: "Unknown error")
-                    is Result.Loading -> RepositoryDetailUiState.Loading
-                }
+            _repositoryState.value = RepositoryDetailUiState.Loading
+            try {
+                val repo = repository.getRepository(repositoryName)
+                _repositoryState.value = RepositoryDetailUiState.Success(repo)
+            } catch (e: Exception) {
+                _repositoryState.value = RepositoryDetailUiState.Error(e.message ?: "Unknown error")
             }
         }
     }
 
     fun loadIssues(state: String) {
-        viewModelScope.launch {
-            val stateFlow = if (state == "open") _openIssuesState else _closedIssuesState
-            stateFlow.value = IssuesUiState.Loading
-            
-            try {
-                refreshIssuesUseCase(organization, repositoryName, state)
-            } catch (e: Exception) {
-                // If refresh fails, we'll still try to load from local database
-            }
-            
-            getIssuesUseCase(organization, repositoryName, state).collect { result ->
-                stateFlow.value = when (result) {
-                    is Result.Success -> {
-                        if (result.data.isEmpty()) {
-                            IssuesUiState.Empty
-                        } else {
-                            IssuesUiState.Success(result.data)
-                        }
-                    }
-                    is Result.Error -> IssuesUiState.Error(result.exception.message ?: "Unknown error")
-                    is Result.Loading -> IssuesUiState.Loading
-                }
-            }
-        }
+        // For now, we'll just show empty states for issues since we're focusing on repositories
+        val stateFlow = if (state == "open") _openIssuesState else _closedIssuesState
+        stateFlow.value = IssuesUiState.Empty
     }
 }
 

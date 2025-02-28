@@ -19,7 +19,8 @@ data class RepositoryDto(
     @SerializedName("created_at")
     val createdAt: String,
     @SerializedName("updated_at")
-    val updatedAt: String
+    val updatedAt: String,
+    val topics: List<String>? = null
 ) {
     fun toDomainModel(): Repository {
         return Repository(
@@ -27,12 +28,13 @@ data class RepositoryDto(
             name = name,
             description = description,
             language = language,
-            stargazersCount = stargazersCount,
-            forksCount = forksCount,
+            stars = stargazersCount,
+            forks = forksCount,
             openIssuesCount = openIssuesCount,
             htmlUrl = htmlUrl,
             createdAt = createdAt,
-            updatedAt = updatedAt
+            updatedAt = updatedAt,
+            topics = topics ?: emptyList()
         )
     }
 } 

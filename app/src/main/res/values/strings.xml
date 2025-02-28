@@ -14,12 +14,34 @@
     <string name="retry">Retry</string>
     <string name="loading">Loading…</string>
     <string name="no_repositories_found">No repositories found</string>
-    <string name="no_repositories_found_for_query">No repositories found matching \'%1$s\'</string>
-    <string name="search_repositories">Search repositories…</string>
-    <string name="search_icon">Search</string>
+    <string name="no_repositories_found_for_query">No repositories found for \"%s\"</string>
+    <string name="search_repositories">Search repositories</string>
+    <string name="search_icon">Search icon</string>
     <string name="clear_search">Clear search</string>
     <string name="no_issues_found">No issues found</string>
     <string name="created_at">Created: %1$s</string>
     <string name="updated_at">Updated: %1$s</string>
     <string name="issue_number">#%1$d</string>
+    
+    <!-- Filter and Sort -->
+    <string name="filter">Filter</string>
+    <string name="sort">Sort</string>
+    <string name="filter_by">Filter by</string>
+    <string name="sort_by">Sort by</string>
+    <string name="close">Close</string>
+    <string name="reset">Reset filters</string>
+    
+    <!-- Filter Options -->
+    <string name="filter_all">All</string>
+    <string name="filter_java">Java</string>
+    <string name="filter_kotlin">Kotlin</string>
+    <string name="filter_android">Android</string>
+    
+    <!-- Sort Options -->
+    <string name="sort_name_asc">Name (A-Z)</string>
+    <string name="sort_name_desc">Name (Z-A)</string>
+    <string name="sort_stars_desc">Stars (High-Low)</string>
+    <string name="sort_stars_asc">Stars (Low-High)</string>
+    <string name="sort_updated_desc">Recently Updated</string>
+    <string name="sort_updated_asc">Oldest Updated</string>
 </resources> 

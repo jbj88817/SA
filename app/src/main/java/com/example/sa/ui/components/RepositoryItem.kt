@@ -64,7 +64,7 @@ fun RepositoryItem(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = stringResource(R.string.stars, repository.stargazersCount),
+                    text = stringResource(R.string.stars, repository.stars),
                     style = MaterialTheme.typography.caption
                 )
                 

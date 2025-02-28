@@ -3,15 +3,14 @@ package com.example.sa.ui.screens.repositories
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -20,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.sa.R
 import com.example.sa.domain.model.Repository
@@ -35,12 +35,50 @@ fun RepositoriesScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val sortOption by viewModel.sortOption.collectAsState()
+    val filterOption by viewModel.filterOption.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current
+    
+    var showFilterDialog by remember { mutableStateOf(false) }
+    var showSortDialog by remember { mutableStateOf(false) }
+    
+    if (showFilterDialog) {
+        FilterDialog(
+            currentFilter = filterOption,
+            onFilterSelected = { 
+                viewModel.updateFilterOption(it)
+                showFilterDialog = false
+            },
+            onDismiss = { showFilterDialog = false }
+        )
+    }
+    
+    if (showSortDialog) {
+        SortDialog(
+            currentSort = sortOption,
+            onSortSelected = { 
+                viewModel.updateSortOption(it)
+                showSortDialog = false
+            },
+            onDismiss = { showSortDialog = false }
+        )
+    }
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = stringResource(R.string.repositories)) }
+                title = { Text(text = stringResource(R.string.repositories)) },
+                actions = {
+                    // Reset button
+                    if (searchQuery.isNotEmpty() || filterOption != FilterOption.ALL || sortOption != SortOption.NAME_ASC) {
+                        IconButton(onClick = { viewModel.resetFilters() }) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = stringResource(R.string.reset)
+                            )
+                        }
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -59,6 +97,30 @@ fun RepositoriesScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             )
+            
+            // Filter and Sort Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Filter Button
+                FilterButton(
+                    currentFilter = filterOption,
+                    onClick = { showFilterDialog = true },
+                    modifier = Modifier.weight(1f)
+                )
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                // Sort Button
+                SortButton(
+                    currentSort = sortOption,
+                    onClick = { showSortDialog = true },
+                    modifier = Modifier.weight(1f)
+                )
+            }
             
             // Content
             Box(
@@ -99,6 +161,160 @@ fun RepositoriesScreen(
                                 modifier = Modifier.padding(16.dp)
                             )
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FilterButton(
+    currentFilter: FilterOption,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier
+    ) {
+        Text(
+            text = "🔍 " + stringResource(R.string.filter) + ": " + 
+                stringResource(currentFilter.stringResId),
+            maxLines = 1
+        )
+    }
+}
+
+@Composable
+fun SortButton(
+    currentSort: SortOption,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier
+    ) {
+        Text(
+            text = "↕️ " + stringResource(R.string.sort) + ": " + 
+                stringResource(currentSort.stringResId),
+            maxLines = 1
+        )
+    }
+}
+
+@Composable
+fun FilterDialog(
+    currentFilter: FilterOption,
+    onFilterSelected: (FilterOption) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colors.surface,
+            elevation = 8.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.filter_by),
+                    style = MaterialTheme.typography.h6,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                
+                FilterOption.values().forEach { option ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = (option == currentFilter),
+                                onClick = { onFilterSelected(option) }
+                            )
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = (option == currentFilter),
+                            onClick = { onFilterSelected(option) }
+                        )
+                        Text(
+                            text = stringResource(option.stringResId),
+                            style = MaterialTheme.typography.body1,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+                
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text(stringResource(R.string.close))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SortDialog(
+    currentSort: SortOption,
+    onSortSelected: (SortOption) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colors.surface,
+            elevation = 8.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.sort_by),
+                    style = MaterialTheme.typography.h6,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                
+                SortOption.values().forEach { option ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = (option == currentSort),
+                                onClick = { onSortSelected(option) }
+                            )
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = (option == currentSort),
+                            onClick = { onSortSelected(option) }
+                        )
+                        Text(
+                            text = stringResource(option.stringResId),
+                            style = MaterialTheme.typography.body1,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+                
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text(stringResource(R.string.close))
                     }
                 }
             }

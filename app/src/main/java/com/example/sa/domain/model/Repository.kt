@@ -5,10 +5,11 @@ data class Repository(
     val name: String,
     val description: String?,
     val language: String?,
-    val stargazersCount: Int,
-    val forksCount: Int,
+    val stars: Int,
+    val forks: Int,
     val openIssuesCount: Int,
     val htmlUrl: String,
     val createdAt: String,
-    val updatedAt: String
+    val updatedAt: String,
+    val topics: List<String> = emptyList()
 ) 
