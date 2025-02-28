@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.intuitrepos"
+    namespace = "com.example.sa"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.intuitrepos"
+        applicationId = "com.example.sa"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

@@ -1,4 +1,4 @@
-# IntuitRepos
+# SA
 
 An Android application that displays Intuit's open-source repositories from GitHub, with features for viewing repository details, searching, and offline support.
 

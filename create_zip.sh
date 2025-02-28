@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Create a zip file of the project
-zip -r IntuitRepos.zip \
+zip -r SA.zip \
     app/src/ \
     app/build.gradle \
     build.gradle \
@@ -12,4 +12,4 @@ zip -r IntuitRepos.zip \
     settings.gradle \
     README.md
 
-echo "Project has been zipped to IntuitRepos.zip" 
+echo "Project has been zipped to SA.zip" 

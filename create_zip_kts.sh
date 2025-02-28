@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Create a zip file of the project with Kotlin DSL changes
-zip -r IntuitReposKTS.zip \
+zip -r SAKTS.zip \
     app/src/ \
     app/build.gradle.kts \
     build.gradle.kts \
@@ -14,4 +14,4 @@ zip -r IntuitReposKTS.zip \
     README.md \
     create_zip_kts.sh
 
-echo "Project has been zipped to IntuitReposKTS.zip" 
+echo "Project has been zipped to SAKTS.zip" 

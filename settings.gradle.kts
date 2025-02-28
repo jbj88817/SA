@@ -1,4 +1,4 @@
-rootProject.name = "IntuitRepos"
+rootProject.name = "SA"
 include(":app")
 
 pluginManagement {
