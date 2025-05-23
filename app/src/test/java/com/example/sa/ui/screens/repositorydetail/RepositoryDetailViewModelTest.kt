@@ -6,8 +6,8 @@ import com.example.sa.domain.model.Issue
 import com.example.sa.domain.model.Repository
 import com.example.sa.domain.model.Result
 import com.example.sa.domain.model.User
-import com.example.sa.domain.usecase.GetIssuesUseCase
-import com.example.sa.domain.usecase.GetRepositoryUseCase
+import com.example.sa.domain.usecase.GetOrganizationRepositoryByNameUseCase
+import com.example.sa.domain.usecase.GetRepositoryIssuesUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -35,8 +35,8 @@ class RepositoryDetailViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     
     private lateinit var viewModel: RepositoryDetailViewModel
-    private lateinit var getRepositoryUseCase: GetRepositoryUseCase
-    private lateinit var getIssuesUseCase: GetIssuesUseCase
+    private lateinit var getRepositoryUseCase: GetOrganizationRepositoryByNameUseCase
+    private lateinit var getIssuesUseCase: GetRepositoryIssuesUseCase
     private lateinit var savedStateHandle: SavedStateHandle
     
     private lateinit var repository: Repository

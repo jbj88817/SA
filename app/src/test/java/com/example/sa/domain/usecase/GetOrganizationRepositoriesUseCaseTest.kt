@@ -2,7 +2,7 @@ package com.example.sa.domain.usecase
 
 import com.example.sa.domain.model.Repository
 import com.example.sa.domain.model.Result
-import com.example.sa.domain.repository.GithubRepository
+import com.example.sa.domain.repository.RepositoryRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -14,16 +14,16 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 
 @ExperimentalCoroutinesApi
-class GetRepositoriesUseCaseTest {
+class GetOrganizationRepositoriesUseCaseTest {
     
-    private lateinit var getRepositoriesUseCase: GetRepositoriesUseCase
-    private lateinit var mockRepository: GithubRepository
+    private lateinit var getOrganizationRepositoriesUseCase: GetOrganizationRepositoriesUseCase
+    private lateinit var mockRepository: RepositoryRepository
     private lateinit var repositories: List<Repository>
     
     @Before
     fun setup() {
         mockRepository = mock()
-        getRepositoriesUseCase = GetRepositoriesUseCase(mockRepository)
+        getOrganizationRepositoriesUseCase = GetOrganizationRepositoriesUseCase(mockRepository)
         
         repositories = listOf(
             Repository(
@@ -61,7 +61,7 @@ class GetRepositoriesUseCaseTest {
         whenever(mockRepository.getRepositories()).thenReturn(repositories)
         
         // When
-        val result = getRepositoriesUseCase().first()
+        val result = getOrganizationRepositoriesUseCase().first()
         
         // Then
         assertTrue(result is Result.Success)
@@ -75,7 +75,7 @@ class GetRepositoriesUseCaseTest {
         whenever(mockRepository.getRepositories()).thenThrow(exception)
         
         // When
-        val result = getRepositoriesUseCase().first()
+        val result = getOrganizationRepositoriesUseCase().first()
         
         // Then
         assertTrue(result is Result.Error)
