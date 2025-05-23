@@ -4,7 +4,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.example.sa.domain.model.Repository
 import com.example.sa.domain.model.Result
 import com.example.sa.domain.usecase.FilterRepositoriesUseCase
-import com.example.sa.domain.usecase.GetRepositoriesUseCase
+import com.example.sa.domain.usecase.GetOrganizationRepositoriesUseCase
 import com.example.sa.domain.usecase.SearchRepositoriesUseCase
 import com.example.sa.domain.usecase.SortRepositoriesUseCase
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +34,7 @@ class RepositoriesViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     
     private lateinit var viewModel: RepositoriesViewModel
-    private lateinit var getRepositoriesUseCase: GetRepositoriesUseCase
+    private lateinit var getRepositoriesUseCase: GetOrganizationRepositoriesUseCase
     private lateinit var searchRepositoriesUseCase: SearchRepositoriesUseCase
     private lateinit var filterRepositoriesUseCase: FilterRepositoriesUseCase
     private lateinit var sortRepositoriesUseCase: SortRepositoriesUseCase
@@ -273,9 +273,7 @@ class RepositoriesViewModelTest {
     }
     
     @Test
-    fun `when ResetFilters intent is processed, all filters are reset`() = runTest {
-        // Given
-        whenever(getRepositoriesUseCase()).thenReturn(flowOf(Result.Success(repositories)))
+        whenever(sortRepositoriesUseCase(repositories, sortOption)).thenReturn(sortedResults)
         
         viewModel = RepositoriesViewModel(
             getRepositoriesUseCase,
@@ -317,7 +315,7 @@ class RepositoriesViewModelTest {
     }
     
     @Test
-    fun `when getRepositoriesUseCase returns error, error state is set`() = runTest {
+    fun `when getOrganizationRepositoriesUseCase returns error, error state is set`() = runTest {
         // Given
         val errorMessage = "Error loading repositories"
         whenever(getRepositoriesUseCase()).thenReturn(flowOf(Result.Error(RuntimeException(errorMessage))))

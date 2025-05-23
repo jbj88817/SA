@@ -13,15 +13,15 @@ import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 
-class GetIssuesUseCaseTest {
+class GetRepositoryIssuesUseCaseTest {
 
     private lateinit var issueRepository: IssueRepository
-    private lateinit var getIssuesUseCase: GetIssuesUseCase
+    private lateinit var getRepositoryIssuesUseCase: GetRepositoryIssuesUseCase
 
     @Before
     fun setUp() {
         issueRepository = mock()
-        getIssuesUseCase = GetIssuesUseCase(issueRepository)
+        getRepositoryIssuesUseCase = GetRepositoryIssuesUseCase(issueRepository)
     }
 
     @Test
@@ -68,7 +68,7 @@ class GetIssuesUseCaseTest {
             .thenReturn(flowOf(expectedResult))
 
         // When
-        val result = getIssuesUseCase(owner, repo, state).single()
+        val result = getRepositoryIssuesUseCase(owner, repo, state).single()
 
         // Then
         assertEquals(expectedResult, result)

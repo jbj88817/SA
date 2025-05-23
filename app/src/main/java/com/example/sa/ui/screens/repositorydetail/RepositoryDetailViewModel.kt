@@ -3,8 +3,8 @@ package com.example.sa.ui.screens.repositorydetail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.sa.domain.usecase.GetIssuesUseCase
-import com.example.sa.domain.usecase.GetRepositoryUseCase
+import com.example.sa.domain.usecase.GetOrganizationRepositoryByNameUseCase
+import com.example.sa.domain.usecase.GetRepositoryIssuesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -12,8 +12,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RepositoryDetailViewModel @Inject constructor(
-    private val getRepositoryUseCase: GetRepositoryUseCase,
-    private val getIssuesUseCase: GetIssuesUseCase,
+    private val getRepositoryUseCase: GetOrganizationRepositoryByNameUseCase,
+    private val getIssuesUseCase: GetRepositoryIssuesUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 

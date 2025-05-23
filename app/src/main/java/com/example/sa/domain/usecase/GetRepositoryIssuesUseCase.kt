@@ -10,7 +10,7 @@ import javax.inject.Inject
  * Use case for getting issues for a repository
  * Note: This is a mock implementation since we're focusing on repositories
  */
-class GetIssuesUseCase @Inject constructor(
+class GetRepositoryIssuesUseCase @Inject constructor(
     private val issueRepository: IssueRepository
 ) {
     

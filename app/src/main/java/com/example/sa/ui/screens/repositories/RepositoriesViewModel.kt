@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sa.R
 import com.example.sa.domain.usecase.FilterRepositoriesUseCase
-import com.example.sa.domain.usecase.GetRepositoriesUseCase
+import com.example.sa.domain.usecase.GetOrganizationRepositoriesUseCase
 import com.example.sa.domain.usecase.SearchRepositoriesUseCase
 import com.example.sa.domain.usecase.SortRepositoriesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RepositoriesViewModel @Inject constructor(
-    private val getRepositoriesUseCase: GetRepositoriesUseCase,
+    private val getRepositoriesUseCase: GetOrganizationRepositoriesUseCase,
     private val searchRepositoriesUseCase: SearchRepositoriesUseCase,
     private val filterRepositoriesUseCase: FilterRepositoriesUseCase,
     private val sortRepositoriesUseCase: SortRepositoriesUseCase
