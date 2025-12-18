@@ -3,16 +3,31 @@ package com.example.sa.ui.screens.repositorydetail
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Tab
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.sa.R
 import com.example.sa.domain.model.Issue
 import com.example.sa.domain.model.Repository
@@ -21,49 +36,65 @@ import com.example.sa.ui.components.IssueItem
 import com.example.sa.ui.components.LoadingComponent
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun RepositoryDetailScreen(
     viewModel: RepositoryDetailViewModel = hiltViewModel(),
     onBackClick: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(uiState.refreshError) {
+        uiState.refreshError?.let { snackbarHostState.showSnackbar(it) }
+    }
     
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.repository_details)) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when {
-                uiState.isLoading -> {
-                    LoadingComponent()
-                }
-                uiState.error != null -> {
-                    ErrorComponent(
-                        message = uiState.error ?: "Unknown error",
-                        onRetry = { viewModel.processIntent(RepositoryDetailIntent.LoadRepository) }
-                    )
-                }
-                uiState.hasRepository -> {
-                    RepositoryDetailContent(
-                        repository = uiState.repository!!,
-                        uiState = uiState,
-                        onRetryOpenIssues = { viewModel.processIntent(RepositoryDetailIntent.LoadIssues("open")) },
-                        onRetryClosedIssues = { viewModel.processIntent(RepositoryDetailIntent.LoadIssues("closed")) }
-                    )
+            if (uiState.isRefreshing && uiState.repository != null) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
+            Box(modifier = Modifier.fillMaxSize()) {
+                when {
+                    uiState.isLoading -> {
+                        LoadingComponent()
+                    }
+                    uiState.error != null && uiState.repository == null -> {
+                        ErrorComponent(
+                            message = uiState.error ?: "Unknown error",
+                            onRetry = { viewModel.processIntent(RepositoryDetailIntent.LoadRepository) }
+                        )
+                    }
+                    uiState.hasRepository -> {
+                        RepositoryDetailContent(
+                            repository = uiState.repository!!,
+                            uiState = uiState,
+                            onRetryOpenIssues = { viewModel.processIntent(RepositoryDetailIntent.LoadIssues("open")) },
+                            onRetryClosedIssues = { viewModel.processIntent(RepositoryDetailIntent.LoadIssues("closed")) }
+                        )
+                    }
                 }
             }
         }
@@ -86,22 +117,22 @@ fun RepositoryDetailContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            elevation = 4.dp
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
                     text = repository.name,
-                    style = MaterialTheme.typography.h5,
-                    color = MaterialTheme.colors.primary
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary
                 )
                 
                 if (repository.description != null) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = repository.description,
-                        style = MaterialTheme.typography.body1
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 }
                 
@@ -113,12 +144,12 @@ fun RepositoryDetailContent(
                 ) {
                     Text(
                         text = stringResource(R.string.stars, repository.stars),
-                        style = MaterialTheme.typography.body2
+                        style = MaterialTheme.typography.bodyMedium
                     )
                     
                     Text(
                         text = stringResource(R.string.forks, repository.forks),
-                        style = MaterialTheme.typography.body2
+                        style = MaterialTheme.typography.bodyMedium
                     )
                     
                     Text(
@@ -127,14 +158,14 @@ fun RepositoryDetailContent(
                         } else {
                             stringResource(R.string.no_language)
                         },
-                        style = MaterialTheme.typography.body2
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
             }
         }
         
         // Tab layout for issues
-        TabRow(selectedTabIndex = selectedTabIndex) {
+        PrimaryTabRow(selectedTabIndex = selectedTabIndex) {
             tabs.forEachIndexed { index, title ->
                 Tab(
                     text = { Text(title) },
@@ -193,7 +224,7 @@ fun IssuesContent(
                 ) {
                     Text(
                         text = stringResource(R.string.no_issues_found),
-                        style = MaterialTheme.typography.h6,
+                        style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(16.dp)
                     )

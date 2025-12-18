@@ -3,9 +3,12 @@ package com.example.sa.ui.screens.repositorydetail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sa.BuildConfig
 import com.example.sa.domain.usecase.GetIssuesUseCase
 import com.example.sa.domain.usecase.GetRepositoryUseCase
+import com.example.sa.domain.usecase.RefreshRepositoryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -14,6 +17,7 @@ import javax.inject.Inject
 class RepositoryDetailViewModel @Inject constructor(
     private val getRepositoryUseCase: GetRepositoryUseCase,
     private val getIssuesUseCase: GetIssuesUseCase,
+    private val refreshRepositoryUseCase: RefreshRepositoryUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -21,9 +25,14 @@ class RepositoryDetailViewModel @Inject constructor(
     val uiState: StateFlow<RepositoryDetailState> = _uiState.asStateFlow()
 
     private val _intent = MutableSharedFlow<RepositoryDetailIntent>()
+
+    private var observeRepositoryJob: Job? = null
+    private var refreshRepositoryJob: Job? = null
+    private var openIssuesJob: Job? = null
+    private var closedIssuesJob: Job? = null
     
     private val repositoryName: String = checkNotNull(savedStateHandle["repositoryName"])
-    private val owner: String = "intuit" // Hardcoded for simplicity, could be passed via SavedStateHandle
+    private val owner: String = BuildConfig.GITHUB_ORG
 
     init {
         processIntents()
@@ -48,28 +57,37 @@ class RepositoryDetailViewModel @Inject constructor(
     }
 
     private fun loadRepository() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
-            
-            getRepositoryUseCase(repositoryName).collect { result ->
+        startObservingRepository()
+        refreshRepository()
+    }
+
+    private fun startObservingRepository() {
+        observeRepositoryJob?.cancel()
+        observeRepositoryJob = viewModelScope.launch {
+            getRepositoryUseCase(owner, repositoryName).collectLatest { result ->
                 result.fold(
                     onSuccess = { repository ->
-                        _uiState.update { 
+                        val shouldTriggerIssues = _uiState.value.repository == null
+                        _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                repository = repository
+                                repository = repository,
+                                error = null
                             )
                         }
-                        // Automatically load issues after repository is loaded
-                        loadIssues("open")
-                        loadIssues("closed")
+                        if (shouldTriggerIssues) {
+                            loadIssues("open")
+                            loadIssues("closed")
+                        }
                     },
-                    onFailure = { error ->
-                        _uiState.update { 
-                            it.copy(
-                                isLoading = false,
-                                error = error.message ?: "Unknown error"
-                            )
+                    onFailure = { throwable ->
+                        _uiState.update { currentState ->
+                            val message = throwable.message ?: "Unknown error"
+                            if (currentState.isRefreshing) {
+                                currentState
+                            } else {
+                                currentState.copy(isLoading = false, error = message)
+                            }
                         }
                     }
                 )
@@ -77,16 +95,45 @@ class RepositoryDetailViewModel @Inject constructor(
         }
     }
 
+    private fun refreshRepository() {
+        refreshRepositoryJob?.cancel()
+        refreshRepositoryJob = viewModelScope.launch {
+            _uiState.update { currentState ->
+                currentState.copy(
+                    isLoading = currentState.repository == null,
+                    isRefreshing = true,
+                    error = null,
+                    refreshError = null
+                )
+            }
+            try {
+                refreshRepositoryUseCase(owner, repositoryName)
+            } catch (t: Throwable) {
+                _uiState.update { currentState ->
+                    val message = t.message ?: "Unknown error"
+                    if (currentState.repository == null) {
+                        currentState.copy(error = message)
+                    } else {
+                        currentState.copy(refreshError = message)
+                    }
+                }
+            } finally {
+                _uiState.update { it.copy(isRefreshing = false, isLoading = false) }
+            }
+        }
+    }
+
     private fun loadIssues(state: String) {
-        viewModelScope.launch {
-            when (state) {
-                "open" -> {
-                    _uiState.update { it.copy(isLoadingOpenIssues = true, openIssuesError = null) }
-                    
-                    getIssuesUseCase(owner, repositoryName, state).collect { result ->
+        when (state) {
+            "open" -> {
+                openIssuesJob?.cancel()
+                _uiState.update { it.copy(isLoadingOpenIssues = true, openIssuesError = null) }
+
+                openIssuesJob = viewModelScope.launch {
+                    getIssuesUseCase(owner, repositoryName, state).collectLatest { result ->
                         result.fold(
                             onSuccess = { issues ->
-                                _uiState.update { 
+                                _uiState.update {
                                     it.copy(
                                         isLoadingOpenIssues = false,
                                         openIssues = issues
@@ -94,7 +141,7 @@ class RepositoryDetailViewModel @Inject constructor(
                                 }
                             },
                             onFailure = { error ->
-                                _uiState.update { 
+                                _uiState.update {
                                     it.copy(
                                         isLoadingOpenIssues = false,
                                         openIssuesError = error.message ?: "Unknown error"
@@ -104,13 +151,16 @@ class RepositoryDetailViewModel @Inject constructor(
                         )
                     }
                 }
-                "closed" -> {
-                    _uiState.update { it.copy(isLoadingClosedIssues = true, closedIssuesError = null) }
-                    
-                    getIssuesUseCase(owner, repositoryName, state).collect { result ->
+            }
+            "closed" -> {
+                closedIssuesJob?.cancel()
+                _uiState.update { it.copy(isLoadingClosedIssues = true, closedIssuesError = null) }
+
+                closedIssuesJob = viewModelScope.launch {
+                    getIssuesUseCase(owner, repositoryName, state).collectLatest { result ->
                         result.fold(
                             onSuccess = { issues ->
-                                _uiState.update { 
+                                _uiState.update {
                                     it.copy(
                                         isLoadingClosedIssues = false,
                                         closedIssues = issues
@@ -118,7 +168,7 @@ class RepositoryDetailViewModel @Inject constructor(
                                 }
                             },
                             onFailure = { error ->
-                                _uiState.update { 
+                                _uiState.update {
                                     it.copy(
                                         isLoadingClosedIssues = false,
                                         closedIssuesError = error.message ?: "Unknown error"
@@ -131,4 +181,4 @@ class RepositoryDetailViewModel @Inject constructor(
             }
         }
     }
-} 
+}

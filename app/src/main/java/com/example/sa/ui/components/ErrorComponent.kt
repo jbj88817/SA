@@ -1,9 +1,9 @@
 package com.example.sa.ui.components
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,9 +28,9 @@ fun ErrorComponent(
         ) {
             Text(
                 text = message,
-                style = MaterialTheme.typography.h6,
+                style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colors.error
+                color = MaterialTheme.colorScheme.error
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(

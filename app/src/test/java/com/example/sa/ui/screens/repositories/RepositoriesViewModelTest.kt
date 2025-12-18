@@ -1,10 +1,12 @@
 package com.example.sa.ui.screens.repositories
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.example.sa.BuildConfig
 import com.example.sa.domain.model.Repository
 import com.example.sa.domain.model.Result
 import com.example.sa.domain.usecase.FilterRepositoriesUseCase
 import com.example.sa.domain.usecase.GetRepositoriesUseCase
+import com.example.sa.domain.usecase.RefreshRepositoriesUseCase
 import com.example.sa.domain.usecase.SearchRepositoriesUseCase
 import com.example.sa.domain.usecase.SortRepositoriesUseCase
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +37,7 @@ class RepositoriesViewModelTest {
     
     private lateinit var viewModel: RepositoriesViewModel
     private lateinit var getRepositoriesUseCase: GetRepositoriesUseCase
+    private lateinit var refreshRepositoriesUseCase: RefreshRepositoriesUseCase
     private lateinit var searchRepositoriesUseCase: SearchRepositoriesUseCase
     private lateinit var filterRepositoriesUseCase: FilterRepositoriesUseCase
     private lateinit var sortRepositoriesUseCase: SortRepositoriesUseCase
@@ -46,6 +49,7 @@ class RepositoriesViewModelTest {
         Dispatchers.setMain(testDispatcher)
         
         getRepositoriesUseCase = mock()
+        refreshRepositoriesUseCase = mock()
         searchRepositoriesUseCase = mock()
         filterRepositoriesUseCase = mock()
         sortRepositoriesUseCase = mock()
@@ -93,11 +97,13 @@ class RepositoriesViewModelTest {
     @Test
     fun `initial state is loading`() = runTest {
         // Given
-        whenever(getRepositoriesUseCase()).thenReturn(flowOf(Result.Success(repositories)))
+        whenever(getRepositoriesUseCase(BuildConfig.GITHUB_ORG)).thenReturn(flowOf(Result.Success(repositories)))
+        whenever(refreshRepositoriesUseCase(BuildConfig.GITHUB_ORG)).thenReturn(Unit)
         
         // When
         viewModel = RepositoriesViewModel(
             getRepositoriesUseCase,
+            refreshRepositoriesUseCase,
             searchRepositoriesUseCase,
             filterRepositoriesUseCase,
             sortRepositoriesUseCase
@@ -111,12 +117,14 @@ class RepositoriesViewModelTest {
         assertEquals(emptyList<Repository>(), viewModel.uiState.value.repositories)
         assertEquals(emptyList<Repository>(), viewModel.uiState.value.filteredRepositories)
         assertNull(viewModel.uiState.value.error)
+        assertNull(viewModel.uiState.value.refreshError)
         
         // Advance time to allow the flow collection
         testDispatcher.scheduler.advanceUntilIdle()
         
         // Then state should be updated with repositories
         assertFalse(viewModel.uiState.value.isLoading)
+        assertFalse(viewModel.uiState.value.isRefreshing)
         assertEquals(repositories, viewModel.uiState.value.repositories)
         assertEquals(repositories, viewModel.uiState.value.filteredRepositories)
         assertNull(viewModel.uiState.value.error)
@@ -125,10 +133,12 @@ class RepositoriesViewModelTest {
     @Test
     fun `when LoadRepositories intent is processed, repositories are loaded`() = runTest {
         // Given
-        whenever(getRepositoriesUseCase()).thenReturn(flowOf(Result.Success(repositories)))
+        whenever(getRepositoriesUseCase(BuildConfig.GITHUB_ORG)).thenReturn(flowOf(Result.Success(repositories)))
+        whenever(refreshRepositoriesUseCase(BuildConfig.GITHUB_ORG)).thenReturn(Unit)
         
         viewModel = RepositoriesViewModel(
             getRepositoriesUseCase,
+            refreshRepositoriesUseCase,
             searchRepositoriesUseCase,
             filterRepositoriesUseCase,
             sortRepositoriesUseCase
@@ -139,6 +149,7 @@ class RepositoriesViewModelTest {
         // Reset to loading state
         viewModel = RepositoriesViewModel(
             getRepositoriesUseCase,
+            refreshRepositoriesUseCase,
             searchRepositoriesUseCase,
             filterRepositoriesUseCase,
             sortRepositoriesUseCase
@@ -158,7 +169,8 @@ class RepositoriesViewModelTest {
     @Test
     fun `when UpdateSearchQuery intent is processed, search is applied`() = runTest {
         // Given
-        whenever(getRepositoriesUseCase()).thenReturn(flowOf(Result.Success(repositories)))
+        whenever(getRepositoriesUseCase(BuildConfig.GITHUB_ORG)).thenReturn(flowOf(Result.Success(repositories)))
+        whenever(refreshRepositoriesUseCase(BuildConfig.GITHUB_ORG)).thenReturn(Unit)
         
         val searchQuery = "android"
         val searchResults = listOf(repositories[0])
@@ -168,6 +180,7 @@ class RepositoriesViewModelTest {
         
         viewModel = RepositoriesViewModel(
             getRepositoriesUseCase,
+            refreshRepositoriesUseCase,
             searchRepositoriesUseCase,
             filterRepositoriesUseCase,
             sortRepositoriesUseCase
@@ -187,10 +200,12 @@ class RepositoriesViewModelTest {
     @Test
     fun `when ClearSearch intent is processed, search is cleared`() = runTest {
         // Given
-        whenever(getRepositoriesUseCase()).thenReturn(flowOf(Result.Success(repositories)))
+        whenever(getRepositoriesUseCase(BuildConfig.GITHUB_ORG)).thenReturn(flowOf(Result.Success(repositories)))
+        whenever(refreshRepositoriesUseCase(BuildConfig.GITHUB_ORG)).thenReturn(Unit)
         
         viewModel = RepositoriesViewModel(
             getRepositoriesUseCase,
+            refreshRepositoriesUseCase,
             searchRepositoriesUseCase,
             filterRepositoriesUseCase,
             sortRepositoriesUseCase
@@ -220,7 +235,8 @@ class RepositoriesViewModelTest {
     @Test
     fun `when UpdateFilterOption intent is processed, filter is applied`() = runTest {
         // Given
-        whenever(getRepositoriesUseCase()).thenReturn(flowOf(Result.Success(repositories)))
+        whenever(getRepositoriesUseCase(BuildConfig.GITHUB_ORG)).thenReturn(flowOf(Result.Success(repositories)))
+        whenever(refreshRepositoriesUseCase(BuildConfig.GITHUB_ORG)).thenReturn(Unit)
         
         val filterOption = FilterOption.KOTLIN
         val filterResults = listOf(repositories[0])
@@ -229,6 +245,7 @@ class RepositoriesViewModelTest {
         
         viewModel = RepositoriesViewModel(
             getRepositoriesUseCase,
+            refreshRepositoriesUseCase,
             searchRepositoriesUseCase,
             filterRepositoriesUseCase,
             sortRepositoriesUseCase
@@ -248,7 +265,8 @@ class RepositoriesViewModelTest {
     @Test
     fun `when UpdateSortOption intent is processed, sort is applied`() = runTest {
         // Given
-        whenever(getRepositoriesUseCase()).thenReturn(flowOf(Result.Success(repositories)))
+        whenever(getRepositoriesUseCase(BuildConfig.GITHUB_ORG)).thenReturn(flowOf(Result.Success(repositories)))
+        whenever(refreshRepositoriesUseCase(BuildConfig.GITHUB_ORG)).thenReturn(Unit)
         
         val sortOption = SortOption.STARS_DESC
         val sortedResults = listOf(repositories[1], repositories[0])
@@ -256,6 +274,7 @@ class RepositoriesViewModelTest {
         
         viewModel = RepositoriesViewModel(
             getRepositoriesUseCase,
+            refreshRepositoriesUseCase,
             searchRepositoriesUseCase,
             filterRepositoriesUseCase,
             sortRepositoriesUseCase
@@ -275,10 +294,12 @@ class RepositoriesViewModelTest {
     @Test
     fun `when ResetFilters intent is processed, all filters are reset`() = runTest {
         // Given
-        whenever(getRepositoriesUseCase()).thenReturn(flowOf(Result.Success(repositories)))
+        whenever(getRepositoriesUseCase(BuildConfig.GITHUB_ORG)).thenReturn(flowOf(Result.Success(repositories)))
+        whenever(refreshRepositoriesUseCase(BuildConfig.GITHUB_ORG)).thenReturn(Unit)
         
         viewModel = RepositoriesViewModel(
             getRepositoriesUseCase,
+            refreshRepositoriesUseCase,
             searchRepositoriesUseCase,
             filterRepositoriesUseCase,
             sortRepositoriesUseCase
@@ -320,11 +341,13 @@ class RepositoriesViewModelTest {
     fun `when getRepositoriesUseCase returns error, error state is set`() = runTest {
         // Given
         val errorMessage = "Error loading repositories"
-        whenever(getRepositoriesUseCase()).thenReturn(flowOf(Result.Error(RuntimeException(errorMessage))))
+        whenever(getRepositoriesUseCase(BuildConfig.GITHUB_ORG)).thenReturn(flowOf(Result.Error(RuntimeException(errorMessage))))
+        whenever(refreshRepositoriesUseCase(BuildConfig.GITHUB_ORG)).thenReturn(Unit)
         
         // When
         viewModel = RepositoriesViewModel(
             getRepositoriesUseCase,
+            refreshRepositoriesUseCase,
             searchRepositoriesUseCase,
             filterRepositoriesUseCase,
             sortRepositoriesUseCase

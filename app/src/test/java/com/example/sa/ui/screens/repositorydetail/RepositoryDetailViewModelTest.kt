@@ -8,6 +8,7 @@ import com.example.sa.domain.model.Result
 import com.example.sa.domain.model.User
 import com.example.sa.domain.usecase.GetIssuesUseCase
 import com.example.sa.domain.usecase.GetRepositoryUseCase
+import com.example.sa.domain.usecase.RefreshRepositoryUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -37,6 +38,7 @@ class RepositoryDetailViewModelTest {
     private lateinit var viewModel: RepositoryDetailViewModel
     private lateinit var getRepositoryUseCase: GetRepositoryUseCase
     private lateinit var getIssuesUseCase: GetIssuesUseCase
+    private lateinit var refreshRepositoryUseCase: RefreshRepositoryUseCase
     private lateinit var savedStateHandle: SavedStateHandle
     
     private lateinit var repository: Repository
@@ -52,6 +54,7 @@ class RepositoryDetailViewModelTest {
         
         getRepositoryUseCase = mock()
         getIssuesUseCase = mock()
+        refreshRepositoryUseCase = mock()
         
         savedStateHandle = SavedStateHandle().apply {
             set("repositoryName", repositoryName)
@@ -125,12 +128,16 @@ class RepositoryDetailViewModelTest {
     @Test
     fun `initial state is loading`() = runTest {
         // Given
-        whenever(getRepositoryUseCase(repositoryName)).thenReturn(flowOf(Result.Success(repository)))
+        whenever(getRepositoryUseCase(owner, repositoryName)).thenReturn(flowOf(Result.Success(repository)))
+        whenever(refreshRepositoryUseCase(owner, repositoryName)).thenReturn(Unit)
+        whenever(getIssuesUseCase(owner, repositoryName, "open")).thenReturn(flowOf(Result.Success(emptyList())))
+        whenever(getIssuesUseCase(owner, repositoryName, "closed")).thenReturn(flowOf(Result.Success(emptyList())))
         
         // When
         viewModel = RepositoryDetailViewModel(
             getRepositoryUseCase,
             getIssuesUseCase,
+            refreshRepositoryUseCase,
             savedStateHandle
         )
         
@@ -155,11 +162,15 @@ class RepositoryDetailViewModelTest {
     @Test
     fun `when LoadRepository intent is processed, repository is loaded`() = runTest {
         // Given
-        whenever(getRepositoryUseCase(repositoryName)).thenReturn(flowOf(Result.Success(repository)))
+        whenever(getRepositoryUseCase(owner, repositoryName)).thenReturn(flowOf(Result.Success(repository)))
+        whenever(refreshRepositoryUseCase(owner, repositoryName)).thenReturn(Unit)
+        whenever(getIssuesUseCase(owner, repositoryName, "open")).thenReturn(flowOf(Result.Success(emptyList())))
+        whenever(getIssuesUseCase(owner, repositoryName, "closed")).thenReturn(flowOf(Result.Success(emptyList())))
         
         viewModel = RepositoryDetailViewModel(
             getRepositoryUseCase,
             getIssuesUseCase,
+            refreshRepositoryUseCase,
             savedStateHandle
         )
         
@@ -169,6 +180,7 @@ class RepositoryDetailViewModelTest {
         viewModel = RepositoryDetailViewModel(
             getRepositoryUseCase,
             getIssuesUseCase,
+            refreshRepositoryUseCase,
             savedStateHandle
         )
         
@@ -185,12 +197,15 @@ class RepositoryDetailViewModelTest {
     @Test
     fun `when LoadIssues intent with open state is processed, open issues are loaded`() = runTest {
         // Given
-        whenever(getRepositoryUseCase(repositoryName)).thenReturn(flowOf(Result.Success(repository)))
+        whenever(getRepositoryUseCase(owner, repositoryName)).thenReturn(flowOf(Result.Success(repository)))
+        whenever(refreshRepositoryUseCase(owner, repositoryName)).thenReturn(Unit)
         whenever(getIssuesUseCase(owner, repositoryName, "open")).thenReturn(flowOf(Result.Success(openIssues)))
+        whenever(getIssuesUseCase(owner, repositoryName, "closed")).thenReturn(flowOf(Result.Success(emptyList())))
         
         viewModel = RepositoryDetailViewModel(
             getRepositoryUseCase,
             getIssuesUseCase,
+            refreshRepositoryUseCase,
             savedStateHandle
         )
         
@@ -209,12 +224,15 @@ class RepositoryDetailViewModelTest {
     @Test
     fun `when LoadIssues intent with closed state is processed, closed issues are loaded`() = runTest {
         // Given
-        whenever(getRepositoryUseCase(repositoryName)).thenReturn(flowOf(Result.Success(repository)))
+        whenever(getRepositoryUseCase(owner, repositoryName)).thenReturn(flowOf(Result.Success(repository)))
+        whenever(refreshRepositoryUseCase(owner, repositoryName)).thenReturn(Unit)
+        whenever(getIssuesUseCase(owner, repositoryName, "open")).thenReturn(flowOf(Result.Success(emptyList())))
         whenever(getIssuesUseCase(owner, repositoryName, "closed")).thenReturn(flowOf(Result.Success(closedIssues)))
         
         viewModel = RepositoryDetailViewModel(
             getRepositoryUseCase,
             getIssuesUseCase,
+            refreshRepositoryUseCase,
             savedStateHandle
         )
         
@@ -234,12 +252,14 @@ class RepositoryDetailViewModelTest {
     fun `when getRepositoryUseCase returns error, error state is set`() = runTest {
         // Given
         val errorMessage = "Error loading repository"
-        whenever(getRepositoryUseCase(repositoryName)).thenReturn(flowOf(Result.Error(RuntimeException(errorMessage))))
+        whenever(getRepositoryUseCase(owner, repositoryName)).thenReturn(flowOf(Result.Error(RuntimeException(errorMessage))))
+        whenever(refreshRepositoryUseCase(owner, repositoryName)).thenReturn(Unit)
         
         // When
         viewModel = RepositoryDetailViewModel(
             getRepositoryUseCase,
             getIssuesUseCase,
+            refreshRepositoryUseCase,
             savedStateHandle
         )
         testDispatcher.scheduler.advanceUntilIdle()
@@ -254,12 +274,15 @@ class RepositoryDetailViewModelTest {
     fun `when getIssuesUseCase for open issues returns error, open issues error state is set`() = runTest {
         // Given
         val errorMessage = "Error loading open issues"
-        whenever(getRepositoryUseCase(repositoryName)).thenReturn(flowOf(Result.Success(repository)))
+        whenever(getRepositoryUseCase(owner, repositoryName)).thenReturn(flowOf(Result.Success(repository)))
+        whenever(refreshRepositoryUseCase(owner, repositoryName)).thenReturn(Unit)
         whenever(getIssuesUseCase(owner, repositoryName, "open")).thenReturn(flowOf(Result.Error(RuntimeException(errorMessage))))
+        whenever(getIssuesUseCase(owner, repositoryName, "closed")).thenReturn(flowOf(Result.Success(emptyList())))
         
         viewModel = RepositoryDetailViewModel(
             getRepositoryUseCase,
             getIssuesUseCase,
+            refreshRepositoryUseCase,
             savedStateHandle
         )
         testDispatcher.scheduler.advanceUntilIdle()
@@ -278,12 +301,15 @@ class RepositoryDetailViewModelTest {
     fun `when getIssuesUseCase for closed issues returns error, closed issues error state is set`() = runTest {
         // Given
         val errorMessage = "Error loading closed issues"
-        whenever(getRepositoryUseCase(repositoryName)).thenReturn(flowOf(Result.Success(repository)))
+        whenever(getRepositoryUseCase(owner, repositoryName)).thenReturn(flowOf(Result.Success(repository)))
+        whenever(refreshRepositoryUseCase(owner, repositoryName)).thenReturn(Unit)
+        whenever(getIssuesUseCase(owner, repositoryName, "open")).thenReturn(flowOf(Result.Success(emptyList())))
         whenever(getIssuesUseCase(owner, repositoryName, "closed")).thenReturn(flowOf(Result.Error(RuntimeException(errorMessage))))
         
         viewModel = RepositoryDetailViewModel(
             getRepositoryUseCase,
             getIssuesUseCase,
+            refreshRepositoryUseCase,
             savedStateHandle
         )
         testDispatcher.scheduler.advanceUntilIdle()

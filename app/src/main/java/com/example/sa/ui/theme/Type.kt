@@ -1,43 +1,43 @@
 package com.example.sa.ui.theme
 
-import androidx.compose.material.Typography
+import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 val Typography = Typography(
-    h1 = TextStyle(
+    headlineMedium = TextStyle( // Was h1
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         fontSize = 24.sp
     ),
-    h2 = TextStyle(
+    headlineSmall = TextStyle( // Was h2
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         fontSize = 20.sp
     ),
-    h3 = TextStyle(
+    titleLarge = TextStyle( // Was h3
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.SemiBold,
         fontSize = 18.sp
     ),
-    h4 = TextStyle(
+    titleMedium = TextStyle( // Was h4
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Medium,
         fontSize = 16.sp
     ),
-    body1 = TextStyle(
+    bodyLarge = TextStyle( // Was body1
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp
     ),
-    body2 = TextStyle(
+    bodyMedium = TextStyle( // Was body2
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp
     ),
-    caption = TextStyle(
+    labelSmall = TextStyle( // Was caption
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp

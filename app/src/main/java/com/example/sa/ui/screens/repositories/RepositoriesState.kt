@@ -7,13 +7,15 @@ import com.example.sa.domain.model.Repository
  */
 data class RepositoriesState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val repositories: List<Repository> = emptyList(),
     val filteredRepositories: List<Repository> = emptyList(),
     val searchQuery: String = "",
     val sortOption: SortOption = SortOption.NAME_ASC,
     val filterOption: FilterOption = FilterOption.ALL,
-    val error: String? = null
+    val error: String? = null,
+    val refreshError: String? = null
 ) {
     val isEmpty: Boolean
-        get() = !isLoading && filteredRepositories.isEmpty() && error == null
-} 
+        get() = !isLoading && !isRefreshing && filteredRepositories.isEmpty() && error == null
+}

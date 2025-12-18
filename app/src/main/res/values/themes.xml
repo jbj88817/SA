@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.SA" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.SA" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/intuit_blue</item>
         <item name="colorPrimaryVariant">@color/intuit_blue</item>
         <item name="colorOnPrimary">@color/white</item>
@@ -9,4 +9,4 @@
         <item name="colorOnSecondary">@color/black</item>
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
     </style>
-</resources> 
+</resources>

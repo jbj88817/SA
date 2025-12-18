@@ -3,10 +3,11 @@ package com.example.sa.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Card
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,8 +26,8 @@ fun IssueItem(issue: Issue) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
-        elevation = 2.dp,
-        backgroundColor = MaterialTheme.colors.surface
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -45,7 +46,7 @@ fun IssueItem(issue: Issue) {
                 
                 Text(
                     text = stringResource(R.string.issue_number, issue.number),
-                    style = MaterialTheme.typography.caption,
+                    style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary
                 )
                 
@@ -53,7 +54,7 @@ fun IssueItem(issue: Issue) {
                 
                 Text(
                     text = issue.title,
-                    style = MaterialTheme.typography.subtitle1,
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -64,7 +65,7 @@ fun IssueItem(issue: Issue) {
             if (issue.body != null) {
                 Text(
                     text = issue.body,
-                    style = MaterialTheme.typography.body2,
+                    style = MaterialTheme.typography.bodyMedium,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -78,16 +79,16 @@ fun IssueItem(issue: Issue) {
             ) {
                 Text(
                     text = stringResource(R.string.created_at, issue.createdAt.substring(0, 10)),
-                    style = MaterialTheme.typography.caption,
+                    style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary
                 )
                 
                 Text(
                     text = "by ${issue.user.login}",
-                    style = MaterialTheme.typography.caption,
+                    style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary
                 )
             }
         }
     }
-} 
+}

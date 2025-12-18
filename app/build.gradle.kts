@@ -1,22 +1,33 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
 
+val projectCompileSdk = libs.versions.compileSdk.get().toInt()
+val projectMinSdk = libs.versions.minSdk.get().toInt()
+val projectTargetSdk = libs.versions.targetSdk.get().toInt()
+
 android {
     namespace = "com.example.sa"
-    compileSdk = 34
+    compileSdk = projectCompileSdk
 
     defaultConfig {
         applicationId = "com.example.sa"
-        minSdk = 24
-        targetSdk = 34
+        minSdk = projectMinSdk
+        targetSdk = projectTargetSdk
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "GITHUB_BASE_URL", "\"https://api.github.com/\"")
+        buildConfigField("String", "GITHUB_ORG", "\"intuit\"")
+
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -36,33 +47,22 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    
-    kotlinOptions {
-        jvmTarget = "17"
+
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
     }
     
     buildFeatures {
         compose = true
-    }
-    
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.0"
+        buildConfig = true
     }
     
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
-    }
-}
-
-// Suppress Kotlin version compatibility check for Compose
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    kotlinOptions {
-        freeCompilerArgs += listOf(
-            "-P",
-            "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=1.9.10"
-        )
     }
 }
 
@@ -73,8 +73,10 @@ dependencies {
     implementation(libs.material)
 
     // Compose
+    implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
-    implementation(libs.compose.material)
+    implementation(libs.compose.icons)
+    implementation(libs.compose.material3) // Changed to Material 3
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.activity)
     implementation(libs.compose.viewmodel)
@@ -84,6 +86,7 @@ dependencies {
     // Lifecycle
     implementation(libs.lifecycle.runtime)
     implementation(libs.lifecycle.viewmodel)
+    implementation(libs.lifecycle.runtime.compose)
 
     // Coroutines
     implementation(libs.coroutines.core)
@@ -91,12 +94,12 @@ dependencies {
 
     // Hilt
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
 
     // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-    kapt(libs.room.compiler)
+    ksp(libs.room.compiler)
 
     // Retrofit
     implementation(libs.retrofit)
@@ -113,6 +116,7 @@ dependencies {
     // Android Testing
     androidTestImplementation(libs.android.junit)
     androidTestImplementation(libs.espresso)
+    androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.compose.ui.test)
     
     // Debug

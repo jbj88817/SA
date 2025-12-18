@@ -6,13 +6,13 @@ An Android application that displays Intuit's open-source repositories from GitH
 
 This project follows modern Android development practices:
 
-- **Architecture**: MVVM with Clean Architecture principles
-- **UI**: Jetpack Compose for a modern, declarative UI
+- **Architecture**: MVVM with Clean Architecture principles (offline-first repositories + issues)
+- **UI**: Jetpack Compose (Material 3)
 - **Dependency Injection**: Hilt
-- **Local Storage**: Room Database
-- **Networking**: Retrofit with OkHttp
-- **Concurrency**: Kotlin Coroutines and Flow
-- **Testing**: JUnit, Mockito, and Compose UI testing
+- **Local Storage**: Room (KSP)
+- **Networking**: Retrofit + OkHttp
+- **Concurrency**: Kotlin Coroutines + Flow
+- **Testing**: JUnit + Mockito + Compose UI testing
 
 ## Build System
 
@@ -21,6 +21,7 @@ The project uses Gradle with Kotlin DSL (KTS) for improved type safety and IDE s
 - **Version Catalog**: Centralized dependency management in `gradle/libs.versions.toml`
 - **Kotlin DSL**: Type-safe build scripts with better IDE support
 - **Dependency Resolution Management**: Centralized repository and dependency configuration
+- **KSP**: Faster annotation processing for Hilt and Room
 
 ### Version Catalog
 
@@ -56,17 +57,23 @@ dependencies {
 
 ## Requirements
 
-- Android Studio Hedgehog or newer
+- Android Studio version compatible with AGP `8.13.x`
 - Minimum SDK: 24 (Android 7.0)
-- Target SDK: 34 (Android 14)
-- Kotlin 1.9.10 or newer
+- Target SDK: 36
+- Kotlin 2.2.x
 
 ## Screen Orientation Handling
 
 The app handles screen orientation changes by:
 - Using ViewModels to retain data across configuration changes
 - Using Jetpack Compose's state management
-- Configuring the main activity to handle orientation changes
+- Letting the system recreate the Activity (default behavior)
+
+## Configuration
+
+- GitHub settings are defined via `BuildConfig` in `app/build.gradle.kts`:
+  - `BuildConfig.GITHUB_BASE_URL`
+  - `BuildConfig.GITHUB_ORG`
 
 ## Compliance with Platform Guidelines
 

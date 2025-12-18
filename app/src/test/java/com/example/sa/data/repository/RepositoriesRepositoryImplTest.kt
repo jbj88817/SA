@@ -17,17 +17,17 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
-class RepositoryRepositoryImplTest {
+class RepositoriesRepositoryImplTest {
 
     private lateinit var repositoryDao: RepositoryDao
     private lateinit var githubApiService: GithubApiService
-    private lateinit var repositoryRepository: RepositoryRepositoryImpl
+    private lateinit var repositoryRepository: RepositoriesRepositoryImpl
 
     @Before
     fun setUp() {
         repositoryDao = mock()
         githubApiService = mock()
-        repositoryRepository = RepositoryRepositoryImpl(repositoryDao, githubApiService)
+        repositoryRepository = RepositoriesRepositoryImpl(repositoryDao, githubApiService)
     }
 
     @Test

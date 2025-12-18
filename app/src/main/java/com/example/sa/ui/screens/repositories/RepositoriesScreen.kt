@@ -6,10 +6,25 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -19,26 +34,32 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.window.Dialog
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.sa.R
 import com.example.sa.domain.model.Repository
 import com.example.sa.ui.components.ErrorComponent
 import com.example.sa.ui.components.LoadingComponent
 import com.example.sa.ui.components.RepositoryItem
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun RepositoriesScreen(
     viewModel: RepositoriesViewModel = hiltViewModel(),
     onRepositoryClick: (String) -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
-    
+
     var showFilterDialog by remember { mutableStateOf(false) }
     var showSortDialog by remember { mutableStateOf(false) }
-    
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(uiState.refreshError) {
+        uiState.refreshError?.let { snackbarHostState.showSnackbar(it) }
+    }
+
     if (showFilterDialog) {
         FilterDialog(
             currentFilter = uiState.filterOption,
@@ -60,11 +81,14 @@ fun RepositoriesScreen(
             onDismiss = { showSortDialog = false }
         )
     }
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.repositories)) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
                 actions = {
                     // Reset button
                     if (uiState.searchQuery.isNotEmpty() || 
@@ -81,13 +105,18 @@ fun RepositoriesScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            if (uiState.isRefreshing && uiState.repositories.isNotEmpty()) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
             // Search Bar
             SearchBar(
                 query = uiState.searchQuery,
@@ -129,10 +158,10 @@ fun RepositoriesScreen(
                     .fillMaxSize()
             ) {
                 when {
-                    uiState.isLoading -> {
+                    uiState.isLoading || (uiState.isRefreshing && uiState.repositories.isEmpty()) -> {
                         LoadingComponent()
                     }
-                    uiState.error != null -> {
+                    uiState.error != null && uiState.repositories.isEmpty() -> {
                         ErrorComponent(
                             message = uiState.error ?: stringResource(R.string.error_loading_repos),
                             onRetry = { viewModel.processIntent(RepositoriesIntent.LoadRepositories) }
@@ -149,7 +178,7 @@ fun RepositoriesScreen(
                                 } else {
                                     stringResource(R.string.no_repositories_found)
                                 },
-                                style = MaterialTheme.typography.h6,
+                                style = MaterialTheme.typography.titleMedium,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.padding(16.dp)
                             )
@@ -214,15 +243,15 @@ fun FilterDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colors.surface,
-            elevation = 8.dp
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
                     text = stringResource(R.string.filter_by),
-                    style = MaterialTheme.typography.h6,
+                    style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
                 
@@ -243,7 +272,7 @@ fun FilterDialog(
                         )
                         Text(
                             text = stringResource(option.stringResId),
-                            style = MaterialTheme.typography.body1,
+                            style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     }
@@ -273,15 +302,15 @@ fun SortDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colors.surface,
-            elevation = 8.dp
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
                     text = stringResource(R.string.sort_by),
-                    style = MaterialTheme.typography.h6,
+                    style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
                 
@@ -302,7 +331,7 @@ fun SortDialog(
                         )
                         Text(
                             text = stringResource(option.stringResId),
-                            style = MaterialTheme.typography.body1,
+                            style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     }
@@ -333,7 +362,7 @@ fun SearchBar(
     modifier: Modifier = Modifier
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
-    
+
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,

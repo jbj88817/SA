@@ -1,15 +1,14 @@
 package com.example.sa.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.darkColors
-import androidx.compose.material.lightColors
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val DarkColorPalette = darkColors(
+private val DarkColorScheme = darkColorScheme(
     primary = IntuitBlue,
-    primaryVariant = IntuitBlue,
     secondary = IntuitGreen,
     background = Color(0xFF121212),
     surface = Color(0xFF1E1E1E),
@@ -19,9 +18,8 @@ private val DarkColorPalette = darkColors(
     onSurface = Color.White
 )
 
-private val LightColorPalette = lightColors(
+private val LightColorScheme = lightColorScheme(
     primary = IntuitBlue,
-    primaryVariant = IntuitBlue,
     secondary = IntuitGreen,
     background = BackgroundLight,
     surface = Color.White,
@@ -33,14 +31,14 @@ private val LightColorPalette = lightColors(
 
 @Composable
 fun SATheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    val colors = if (darkTheme) {
-        DarkColorPalette
+    val colorScheme = if (darkTheme) {
+        DarkColorScheme
     } else {
-        LightColorPalette
+        LightColorScheme
     }
 
     MaterialTheme(
-        colors = colors,
+        colorScheme = colorScheme,
         typography = Typography,
         shapes = Shapes,
         content = content

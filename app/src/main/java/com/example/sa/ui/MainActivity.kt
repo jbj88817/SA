@@ -4,14 +4,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.sa.ui.navigation.SaDestinations
 import com.example.sa.ui.screens.repositories.RepositoriesScreen
 import com.example.sa.ui.screens.repositorydetail.RepositoryDetailScreen
 import com.example.sa.ui.theme.SATheme
@@ -25,26 +26,26 @@ class MainActivity : ComponentActivity() {
             SATheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colors.background
+                    color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
                     
                     NavHost(
                         navController = navController,
-                        startDestination = "repositories"
+                        startDestination = SaDestinations.RepositoriesRoute
                     ) {
-                        composable("repositories") {
+                        composable(SaDestinations.RepositoriesRoute) {
                             RepositoriesScreen(
                                 onRepositoryClick = { repositoryName ->
-                                    navController.navigate("repository_detail/$repositoryName")
+                                    navController.navigate(SaDestinations.repositoryDetailRoute(repositoryName))
                                 }
                             )
                         }
                         
                         composable(
-                            route = "repository_detail/{repositoryName}",
+                            route = SaDestinations.RepositoryDetailRoute,
                             arguments = listOf(
-                                navArgument("repositoryName") {
+                                navArgument(SaDestinations.RepositoryNameArg) {
                                     type = NavType.StringType
                                 }
                             )

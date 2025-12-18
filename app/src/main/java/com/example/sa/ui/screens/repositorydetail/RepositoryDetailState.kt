@@ -8,6 +8,7 @@ import com.example.sa.domain.model.Repository
  */
 data class RepositoryDetailState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val repository: Repository? = null,
     val openIssues: List<Issue> = emptyList(),
     val closedIssues: List<Issue> = emptyList(),
@@ -15,7 +16,8 @@ data class RepositoryDetailState(
     val isLoadingClosedIssues: Boolean = false,
     val openIssuesError: String? = null,
     val closedIssuesError: String? = null,
-    val error: String? = null
+    val error: String? = null,
+    val refreshError: String? = null
 ) {
     val hasRepository: Boolean
         get() = repository != null
