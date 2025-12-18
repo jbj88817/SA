@@ -1,0 +1,8 @@
+<resources>
+    <string name="retry">Retry</string>
+    <string name="stars">Stars: %1$d</string>
+    <string name="forks">Forks: %1$d</string>
+    <string name="language">Language: %1$s</string>
+    <string name="no_language">Language: Not specified</string>
+</resources>
+

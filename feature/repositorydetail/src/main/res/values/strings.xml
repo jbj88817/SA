@@ -1,0 +1,8 @@
+<resources>
+    <string name="repository_details">Repository Details</string>
+    <string name="open_issues">Open Issues</string>
+    <string name="closed_issues">Closed Issues</string>
+    <string name="no_issues_found">No issues found</string>
+    <string name="issue_number">#%1$d</string>
+    <string name="created_at">Created: %1$s</string>
+</resources>

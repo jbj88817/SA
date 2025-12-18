@@ -13,9 +13,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.sa.ui.navigation.SaDestinations
-import com.example.sa.ui.screens.repositories.RepositoriesScreen
-import com.example.sa.ui.screens.repositorydetail.RepositoryDetailScreen
-import com.example.sa.ui.theme.SATheme
+import com.example.sa.feature.repositories.RepositoriesScreen
+import com.example.sa.feature.repositorydetail.RepositoryDetailScreen
+import com.example.sa.core.ui.theme.SATheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

@@ -67,51 +67,24 @@ android {
 }
 
 dependencies {
-    // Core Android dependencies
-    implementation(libs.core.ktx)
-    implementation(libs.appcompat)
+    implementation(project(":core"))
+    implementation(project(":data"))
+    implementation(project(":domain"))
+    implementation(project(":feature:repositories"))
+    implementation(project(":feature:repositorydetail"))
+
+    // XML theme support for the app manifest
     implementation(libs.material)
 
-    // Compose
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
-    implementation(libs.compose.icons)
-    implementation(libs.compose.material3) // Changed to Material 3
+    implementation(libs.compose.material3)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.activity)
-    implementation(libs.compose.viewmodel)
     implementation(libs.compose.navigation)
-    implementation(libs.compose.hilt.navigation)
 
-    // Lifecycle
-    implementation(libs.lifecycle.runtime)
-    implementation(libs.lifecycle.viewmodel)
-    implementation(libs.lifecycle.runtime.compose)
-
-    // Coroutines
-    implementation(libs.coroutines.core)
-    implementation(libs.coroutines.android)
-
-    // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-
-    // Room
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    ksp(libs.room.compiler)
-
-    // Retrofit
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.gson)
-    implementation(libs.okhttp.logging)
-
-    // Testing
-    testImplementation(libs.junit)
-    testImplementation(libs.coroutines.test)
-    testImplementation(libs.arch.testing)
-    testImplementation(libs.mockito.core)
-    testImplementation(libs.mockito.kotlin)
     
     // Android Testing
     androidTestImplementation(libs.android.junit)

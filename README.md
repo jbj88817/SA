@@ -14,6 +14,15 @@ This project follows modern Android development practices:
 - **Concurrency**: Kotlin Coroutines + Flow
 - **Testing**: JUnit + Mockito + Compose UI testing
 
+## Modules
+
+- `:app` - App entrypoint, navigation host, Hilt app config
+- `:core` - Design system (Compose theme) + shared UI bits
+- `:domain` - Models + use cases + repository interfaces (no Android UI)
+- `:data` - Retrofit/Room implementations + Hilt bindings
+- `:feature:repositories` - Repositories list feature (UI + ViewModel)
+- `:feature:repositorydetail` - Repository details + issues feature (UI + ViewModel)
+
 ## Build System
 
 The project uses Gradle with Kotlin DSL (KTS) for improved type safety and IDE support. Key features include:

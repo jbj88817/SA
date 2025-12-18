@@ -1,5 +1,10 @@
 rootProject.name = "SA"
 include(":app")
+include(":core")
+include(":domain")
+include(":data")
+include(":feature:repositories")
+include(":feature:repositorydetail")
 
 pluginManagement {
     repositories {
